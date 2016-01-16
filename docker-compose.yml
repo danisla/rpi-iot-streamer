@@ -1,0 +1,14 @@
+jplview:
+    image: danisla/rpi-iot-streamer:1.0.0
+    environment:
+        DEBUG:
+        PORT: 8888
+        PLAYER_DOCKER_IMAGE: "danisla/livestreamer:latest"
+        IOT_ENDPOINT: "${IOT_ENDPOINT}"
+        IOT_PORT: 8883
+        THING_NAME: raspberry-pi
+    ports:
+        - "8888:8888"
+    volumes:
+        - /home/pi/recovery/_USER/certs:/opt/certs:ro
+        - /var/run/docker.sock:/var/run/docker.sock:rw
