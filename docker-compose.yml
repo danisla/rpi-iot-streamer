@@ -1,4 +1,4 @@
-jplview:
+streamer:
     image: danisla/rpi-iot-streamer:1.0.0
     environment:
         DEBUG:
