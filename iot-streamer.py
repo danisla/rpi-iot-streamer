@@ -14,6 +14,7 @@ import signal
 import docker
 import re
 import livestreamer
+from livestreamer import NoPluginError, PluginError
 
 ###################################
 # Logging setup
@@ -286,7 +287,7 @@ def create_stream_container(url, quality):
 
         devices = []
         if options.rpi_player:
-            for d in ["/dev/vchiq", "/dev/fb0", "/dev/snd"]
+            for d in ["/dev/vchiq", "/dev/fb0", "/dev/snd"]:
                 devices.append({
                     "PathOnHost": d,
                     "PathInContainer": d,
@@ -306,7 +307,7 @@ def create_stream_container(url, quality):
             port_bindings={
                 8000: 8000
             },
-            devices=devices
+            devices=devices,
             binds=binds
         )
 
