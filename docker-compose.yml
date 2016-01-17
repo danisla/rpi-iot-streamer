@@ -1,5 +1,5 @@
 streamer:
-    image: danisla/rpi-iot-streamer:1.0.0
+    image: danisla/rpi-iot-streamer:1.0.1
     environment:
         DEBUG:
         PORT: 8888
