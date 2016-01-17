@@ -10,10 +10,10 @@ streamer:
         RESOLVE_URL: "false"
         IOT_ENDPOINT: "${IOT_ENDPOINT}"
         IOT_PORT: 8883
-        THING_NAME: raspberry-pi
+        THING_NAME: "${THING_NAME}"
     ports:
         - 8000:8000
     volumes:
         - /var/run/docker.sock:/var/run/docker.sock:rw
-        - ./iot-streamer.py:/usr/src/app/iot-streamer.py:ro
-        - ./certs:/usr/src/app/certs:ro
+        - ./src/iot_streamer:/usr/src/app:ro
+        - ./certs:/opt/certs:ro

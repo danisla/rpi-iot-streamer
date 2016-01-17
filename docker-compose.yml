@@ -10,7 +10,7 @@ streamer:
     ports:
         - "8888:8888"
     volumes:
-        - /home/pi/recovery/_USER/certs:/usr/src/app/certs:ro
+        - /home/pi/recovery/_USER/certs:/opt/certs:ro
         - /var/run/docker.sock:/var/run/docker.sock:rw
 
 player:
