@@ -332,6 +332,7 @@ def create_stream_container(url, quality):
         )
     except Exception as e:
         logger.error("Error creating docker container: {0}".format(e))
+        #TODO: revert to previous stream on error
 
     if container:
         logger.info("Created container with image: '{0}'".format(docker_image))
@@ -391,6 +392,7 @@ def start_stream(url, quality):
             return True, "Container started"
         else:
             return False, "Error starting stream container"
+            #TODO: revert to previous stream on error
 
     else:
         return False, "Could not create docker container for url '{0}'".format(url)
@@ -452,13 +454,11 @@ def on_mqtt_subscribe(mqttc, obj, mid, granted_qos):
     logger.info('Subscribed: {0}, {1}, {2}'.format(obj, mid, granted_qos))
     mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1, retain=False)
     options.mqtt_subscribed = True
+    logger.info("Waiting for initial shadow state message.")
 
 @gen.coroutine
 def on_mqtt_message(mqttc, obj, msg):
     logger.info("Received message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
-
-    if options.mqtt_got_first_message is False:
-        options.mqtt_got_first_message = True
 
     if msg and msg.payload:
         payload = json.loads(msg.payload.decode())
@@ -474,8 +474,16 @@ def on_mqtt_message(mqttc, obj, msg):
         for k in ['desired', 'reported']:
             if k in state:
 
-                url = state[k].get('url', None)
+                if 'url' not in state[k]:
+                    logger.warning("'url' not found in device shadow. discarding message.")
+                    return
+
+                url = state[k]['url']
                 logger.debug("{0} URL: {1}".format(k, url))
+
+                if not url:
+                    logger.warning("empty url in shadow state, discarding message.")
+                    return
 
                 # Try to extract quality field.
                 quality = state[k].get("quality", "best")
@@ -487,20 +495,21 @@ def on_mqtt_message(mqttc, obj, msg):
                     logger.info("Started stream via MQTT")
                 else:
                     logger.error("Error starting stream: {0}".format(res_msg))
+                    #TODO revert to previous stream on error
 
                 found = True
                 break
 
         if not found:
-            logger.warn("Unsupported state in message, expected 'desired', or 'reported'")
+            logger.warning("Unsupported state in message, expected 'desired', or 'reported'")
 
     else:
-        logger.warn("No 'state' found in payload.")
+        logger.warning("No 'state' found in payload.")
 
 def wait_for_mqtt_connected_and_subscribed(timeout):
     count = 0
     while count < timeout:
-        if options.mqtt_connected and options.mqtt_subscribed and options.mqtt_got_first_message: break
+        if options.mqtt_connected and options.mqtt_subscribed: break
 
         logger.info("Waiting {0} seconds for MQTT to connect and subscribe.".format(timeout - count))
         time.sleep(1)
@@ -518,7 +527,6 @@ if __name__ == "__main__":
 
     define("mqtt_connected", default=False, help="Indicator that mqtt connect was successful")
     define("mqtt_subscribed", default=False, help="Indicator that mqtt subscribe was successful")
-    define("mqtt_got_first_message", default=False, help="Indicator that mqtt has received the intiial state")
 
     if options.thing_name is None:
         logger.error("No THING_NAME defined")
@@ -579,6 +587,8 @@ if __name__ == "__main__":
         callback(res)
 
     start_mqtt_with_retry(lambda res: sys.exit(-1) if not res else logger.info("MQTT connected and subscribed to thing shadow topic."))
+
+    #TODO: add periodic watcher to verify curr_stream container is alive and restart it if it dies.
 
     main_ioloop = ioloop.IOLoop.instance()
 
