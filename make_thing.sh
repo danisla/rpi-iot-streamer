@@ -42,8 +42,8 @@ function create_new_iot_thing() {
 
     fetch_root_ca "./certs/rootCA.pem"
 
-    cert_pem="./certs/${name}-cert.pem"
-    key_pem="./certs/${name}-private.pem"
+    cert_pem="./certs/cert.pem"
+    key_pem="./certs/private.pem"
 
     keycert_json=$(aws iot create-keys-and-certificate --set-as-active \
         --certificate-pem-outfile "${cert_pem}" \
@@ -65,10 +65,13 @@ function create_new_iot_thing() {
 
 #############################################################
 
-location=$(get_input "Device Location" "${DEFAULT_DEVICE_LOCATION:-home}")
+name="${THING_NAME}"
+location="${THING_LOCATION}"
+
+[[ -z "$location" ]] && location=$(get_input "Device Location" "${DEFAULT_DEVICE_LOCATION:-home}")
 
 tmp_name="${DEFAULT_DEVICE_PREFIX:-"streamer-"}${location}"
-name=$(get_input "Device Name" ${DEVICE_NAME:-$tmp_name})
+[[ -z "$name" ]] && name=$(get_input "Device Name" ${DEVICE_NAME:-$tmp_name})
 
 existing_thing=$(get_existing_thing "$name")
 if [[ -n "${existing_thing}" ]]; then
@@ -87,7 +90,7 @@ log "INFO: Creating IoT thing with policy '${policyName}'"
 
 thing_json=$(create_new_iot_thing "${name}" "${location}" "${policyName}")
 
-[[ ! -s "./certs/rootCA.pem" || ! -s "./certs/${name}-cert.pem" || ! -s "./certs/${name}-private.pem" ]] && log "ERORR: Could not generate certs."
+[[ ! -s "./certs/rootCA.pem" || ! -s "./certs/cert.pem" || ! -s "./certs/private.pem" ]] && log "ERORR: Could not generate certs."
 
 log "INFO: Device certificates generated and saved to ./certs/"
 
