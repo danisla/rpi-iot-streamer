@@ -23,5 +23,5 @@ streamer:
         - 8000:8000
     volumes:
         - ${DOCKER_CERT_PATH}:/docker:ro
-        - ./iot-streamer.py:/opt/iot-streamer.py:ro
+        - ./iot-streamer.py:/usr/src/app/iot-streamer.py:ro
         - ./certs:/opt/certs:ro

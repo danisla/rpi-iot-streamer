@@ -100,7 +100,10 @@ def get_docker_client():
             cli = docker.Client(base_url=docker_host, tls=tls_config, version='auto')
 
         else:
-            cli = docker.Client()
+            logger.warning("Connecting to {0} without TLS certs.")
+
+    else:
+        cli = docker.Client()
 
     return cli
 
