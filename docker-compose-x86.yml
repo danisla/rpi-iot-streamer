@@ -11,17 +11,9 @@ streamer:
         IOT_ENDPOINT: "${IOT_ENDPOINT}"
         IOT_PORT: 8883
         THING_NAME: raspberry-pi
-        DOCKER_HOST:
-        DOCKER_TLS_CA: "/docker/ca.pem"
-        DOCKER_TLS_CERT: "/docker/cert.pem"
-        DOCKER_TLS_KEY: "/docker/key.pem"
-
-    # connect using VLC on dockerhost port 8000
-    #net: host
-    #user: nobody
     ports:
         - 8000:8000
     volumes:
-        - ${DOCKER_CERT_PATH}:/docker:ro
+        - /var/run/docker.sock:/var/run/docker.sock:rw
         - ./iot-streamer.py:/usr/src/app/iot-streamer.py:ro
-        - ./certs:/opt/certs:ro
+        - ./certs:/usr/src/app/certs:ro

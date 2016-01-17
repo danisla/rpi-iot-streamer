@@ -255,7 +255,7 @@ def create_stream_container(url, quality):
 
     docker_image = options.player_docker_image
 
-    if url.startswith("rtsp"):
+    if url.startswith("rtsp") or (options.rpi_player and url.startswith("rtmp")):
         # Just pass the url to the player, no checks.
         pass
 
@@ -282,7 +282,10 @@ def create_stream_container(url, quality):
         if options.resolve_url:
             logger.info("Stream URL resolved to: '{0}'".format(stream.url))
 
-            url = stream.url
+            try:
+                url = stream.url
+            except Exception as e:
+                return False, "Could not get url from stream, plugin class missing .url method: {0}".format(type(stream))
 
     container = None
     try:
@@ -290,16 +293,15 @@ def create_stream_container(url, quality):
         devices = []
         if options.rpi_player:
             for d in ["/dev/vchiq", "/dev/fb0", "/dev/snd"]:
-                devices.append({
-                    "PathOnHost": d,
-                    "PathInContainer": d,
-                    "CgroupPermissions": "mrw"
-                })
+                devices.append(d+":"+d+":rwm")
 
+        volumes = []
         binds = []
         if options.rpi_player:
             for v in ["/opt/vc"]:
                 binds.append(v+":"+v+":ro")
+            volumes.append(v)
+
 
         host_config = cli.create_host_config(
             restart_policy={
@@ -313,12 +315,19 @@ def create_stream_container(url, quality):
             binds=binds
         )
 
+        if options.rpi_player:
+            entrypoint = "omxplayer -b -o both"
+        else:
+            entrypoint = None
+
         container = cli.create_container(
             image=docker_image,
+            entrypoint=entrypoint,
             command=url,
             ports=[8000],
             detach=True,
             name="curr_stream",
+            volumes=volumes,
             host_config=host_config
         )
     except Exception as e:
@@ -374,8 +383,6 @@ def start_stream(url, quality):
 
         container_id = container["Id"]
 
-        #logger.info("Starting docker container with image: '{0}', url: '{1}'".format(docker_image, url))
-
         res = yield start_container(container_id, grace_period=options.grace_period)
         if res:
             options.curr_url = url
@@ -392,11 +399,20 @@ def start_stream(url, quality):
 @gen.coroutine
 def is_stream_active():
 
-    logger.info("Checking for active containers matching name: '{0}'".format(curr_container_name))
+    containers = find_containers(curr_container_name)
+    running = []
 
-    c = find_containers(curr_container_name)
+    names_status = []
+    for c in containers:
+        names_status.append({
+            "name": c["Names"],
+            "status": c["Status"]
+        })
 
-    return len(c) > 0
+        if c["Status"].startswith("Up"):
+            running.append(c)
+
+    return len(running) > 0
 
 
 @gen.coroutine
@@ -407,7 +423,7 @@ def stop_stream():
     curr_containers = find_containers(curr_container_name, all=True)
     for c in curr_containers:
         i = c["Id"]
-        if c['Status'].startswith("Up"):
+        if not c['Status'].startswith("Exited") and not c['Status'].startswith("Created"):
             logger.info("Killing container: '{0}'".format(c["Names"]))
             cli.kill(i)
 
@@ -440,6 +456,9 @@ def on_mqtt_subscribe(mqttc, obj, mid, granted_qos):
 @gen.coroutine
 def on_mqtt_message(mqttc, obj, msg):
     logger.debug("Received message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
+
+    if options.mqtt_got_first_message is False:
+        options.mqtt_got_first_message = True
 
     payload = json.loads(msg.payload.decode())
 
@@ -476,7 +495,8 @@ def on_mqtt_message(mqttc, obj, msg):
 def wait_for_mqtt_connected_and_subscribed(timeout):
     count = 0
     while count < timeout:
-        if options.mqtt_connected and options.mqtt_subscribed: break
+        if options.mqtt_connected and options.mqtt_subscribed and options.mqtt_got_first_message: break
+
         logger.info("Waiting {0} seconds for MQTT to connect and subscribe.".format(timeout - count))
         time.sleep(1)
         count += 1
@@ -493,6 +513,7 @@ if __name__ == "__main__":
 
     define("mqtt_connected", default=False, help="Indicator that mqtt connect was successful")
     define("mqtt_subscribed", default=False, help="Indicator that mqtt subscribe was successful")
+    define("mqtt_got_first_message", default=False, help="Indicator that mqtt has received the intiial state")
 
     if options.thing_name is None:
         logger.error("No THING_NAME defined")
