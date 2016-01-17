@@ -455,12 +455,17 @@ def on_mqtt_subscribe(mqttc, obj, mid, granted_qos):
 
 @gen.coroutine
 def on_mqtt_message(mqttc, obj, msg):
-    logger.debug("Received message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
+    logger.info("Received message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
 
     if options.mqtt_got_first_message is False:
         options.mqtt_got_first_message = True
 
-    payload = json.loads(msg.payload.decode())
+    if msg and msg.payload:
+        payload = json.loads(msg.payload.decode())
+    else:
+        logger.error("Invalid message recieved: {0}".format(msg))
+        mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1, retain=False)
+        return
 
     if 'state' in payload:
         state = payload['state']
@@ -548,6 +553,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     def start_mqtt():
         logger.info("Starting mqtt for thing: {0}".format(options.thing_name))
