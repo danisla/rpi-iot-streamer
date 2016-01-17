@@ -1,6 +1,8 @@
 import os
 import sys
 import random
+from concurrent.futures import ThreadPoolExecutor
+from tornado.concurrent import run_on_executor
 from tornado import gen, ioloop, web, process
 from tornado.options import define, options
 import time
@@ -31,6 +33,8 @@ define("grace_period", default=int(os.environ.get("GRACE_PERIOD", "10")), type=i
 
 # Name of currently running container.
 curr_container_name = '.*curr_stream.*'
+
+thread_pool = ThreadPoolExecutor(max_workers=4)
 
 ################################################################################
 
@@ -129,13 +133,24 @@ def create_stream_container(url, quality):
         return None
 
 
+def tail_logs(container_id):
+    # Get container logs and send them to the logger.
+    # This is blocking and should be run in a thread.
+    cli = get_docker_client()
+    for log in cli.attach(container_id, stream=True, stdout=True, stderr=True):
+        logger.info(log)
+
+
 @gen.coroutine
 def start_container(container_id, grace_period=None):
+
 
     cli = get_docker_client()
 
     try:
         cli.start(container_id)
+        thread_pool.submit(tail_logs, container_id)
+
     except Exception as e:
         logger.error("Could not start container {0}: {1}".format(container_id, e))
         return False
@@ -225,21 +240,9 @@ def stop_stream():
 
 if __name__ == "__main__":
 
-    ################################
-    log_level = logging.INFO
-    if os.environ.get("DEBUG","False").lower() == "true":
-        log_level = logging.DEBUG
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    logger.setLevel(log_level)
-    ################################
-
     options.parse_command_line()
+
+    logger.setLevel(logging.DEBUG if options.debug else logging.INFO)
 
     define("curr_url", default=None, help="Current URL being displayed")
     define("curr_quality", default=None, help="Current stream quality being displayed")

@@ -24,13 +24,36 @@ define("mqtt_connect_timeout", default=int(os.environ.get("MQTT_CONNECT_TIMEOUT"
 
 class IotStreamerThing(object):
 
+    # Handlers for IoT Thing Shadow flow
+    # http://docs.aws.amazon.com/iot/latest/developerguide/thing-shadow-mqtt.html
+
     def __init__(self):
+        logger.setLevel(logging.DEBUG if options.debug else logging.INFO)
+
+        self.shadow = None
 
         mqttc = mqtt.Client(client_id=options.client_id)
-        mqttc.on_connect   = self.on_mqtt_connect
-        mqttc.on_subscribe = self.on_mqtt_subscribe
-        mqttc.on_message   = self.on_mqtt_message
-        mqttc.message_callback_add('$aws/things/%s/shadow/get/rejected' % options.thing_name, self.on_mqtt_thing_get_rejected)
+        mqttc.on_connect   = self.on_connect
+        mqttc.on_subscribe = self.on_subscribe
+        mqttc.on_message   = self.on_message
+
+        ### /shadow/update handlers ###
+        # Response to /update
+        mqttc.message_callback_add('$aws/things/%s/shadow/update/accepted' % options.thing_name, self.on_update_accepted)
+        # Rejection from /update
+        mqttc.message_callback_add('$aws/things/%s/shadow/update/rejected' % options.thing_name, self.on_update_rejected)
+        # Delta broadcast
+        mqttc.message_callback_add('$aws/things/%s/shadow/update/delta' % options.thing_name, self.on_update_delta)
+
+        ### /shadow/get handlers ###
+        # Response to /shadow/get
+        mqttc.message_callback_add('$aws/things/%s/shadow/get/accepted' % options.thing_name, self.on_get_accepted)
+        # Rejection from /shadow/get
+        mqttc.message_callback_add('$aws/things/%s/shadow/get/rejected' % options.thing_name, self.on_get_rejected)
+
+        ### /shadow/delete
+        # Not applicable
+
         mqttc.tls_set(
             os.path.join(options.certs_dir, "rootCA.pem"),
             certfile=os.path.join(options.certs_dir, "cert.pem"),
@@ -40,6 +63,9 @@ class IotStreamerThing(object):
         )
 
         self.mqttc = mqttc
+
+        self.get_shadow_retry_count = 0
+        self.get_shadow_max_retries = 3
 
 
     def start_thing(self):
@@ -51,9 +77,9 @@ class IotStreamerThing(object):
             self.mqttc.loop_start()
             time.sleep(1)
 
-            return self.wait_for_mqtt_connected_and_subscribed(options.mqtt_connect_timeout)
+            return self.wait_for_connect_and_subscribe(options.mqtt_connect_timeout)
 
-        def start_mqtt_with_retry(callback=None):
+        def start_with_retry(callback=None):
             mqtt_retries = 3
             for retry in range(mqtt_retries):
                 res = start_mqtt()
@@ -68,10 +94,10 @@ class IotStreamerThing(object):
 
             callback(res)
 
-        start_mqtt_with_retry(lambda res: sys.exit(-1) if not res else logger.info("MQTT connected and subscribed to thing shadow topic."))
+        start_with_retry(lambda res: sys.exit(-1) if not res else logger.info("MQTT connected and subscribed to thing shadow topic."))
 
 
-    def wait_for_mqtt_connected_and_subscribed(self, timeout):
+    def wait_for_connect_and_subscribe(self, timeout):
         count = 0
         while count < timeout:
             if options.mqtt_connected and options.mqtt_subscribed: break
@@ -85,14 +111,11 @@ class IotStreamerThing(object):
     def stop_thing(self):
         self.mqttc.loop_stop(force=True)
 
-    @gen.coroutine
-    def on_mqtt_connect(self, mqttc, obj, flags, rc):
+
+    def on_connect(self, mqttc, obj, flags, rc):
 
         if rc == 0:
             logger.info("Subscriber Connection status code: "+str(rc)+" | Connection status: successful")
-
-            #mqttc.message_callback_add('$aws/things/%s/shadow/get/accepted' % options.thing_name, on_mqtt_thing_update)
-            #mqttc.message_callback_add('$aws/things/%s/shadow/get/rejected' % options.thing_name, on_mqtt_thing_get_rejected)
 
             self.mqttc.subscribe([
                 ('$aws/things/%s/shadow/update/accepted' % options.thing_name, 1),
@@ -109,68 +132,130 @@ class IotStreamerThing(object):
         else:
             logger.error("Unknown return code after mqtt connect: '{0}'".format(rc))
 
-
-    @gen.coroutine
-    def on_mqtt_subscribe(self, mqttc, obj, mid, granted_qos):
+    def on_subscribe(self, mqttc, obj, mid, granted_qos):
         logger.info('Subscribed: {0}, {1}, {2}'.format(obj, mid, granted_qos))
-        self.mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1, retain=False)
+        self.__get_thing_shadow()
         options.mqtt_subscribed = True
         logger.info("Waiting for initial shadow state message.")
+        self.__initial_state_watchdog(10)
+
 
     @gen.coroutine
-    def on_mqtt_thing_get_rejected(self, mqttc, obj, msg):
-        logger.info("Received thing get rejected from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
+    def __initial_state_watchdog(self, timeout, retries=3):
+        retry=0
+        count = 0
+        while not self.shadow is not None:
+            count += 1
+            nxt = gen.sleep(1)
 
-    @gen.coroutine
-    def on_mqtt_thing_update(self, mqttc, obj, msg):
-        logger.info("Received thing update from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
+            logger.info("Waiting for initial shadow: {0}s remaining".format(timeout-count))
 
-    @gen.coroutine
-    def on_mqtt_message(self, mqttc, obj, msg):
-        logger.info("Received message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))
-
-        if msg and msg.payload:
-            payload = json.loads(msg.payload.decode())
-        else:
-            logger.error("Invalid message recieved: {0}".format(msg))
-            self.mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1, retain=False)
-            return
-
-        if 'state' in payload:
-            state = payload['state']
-
-            found = False
-            for k in ['desired', 'reported']:
-                if k in state:
-
-                    if 'url' not in state[k]:
-                        logger.warning("'url' not found in device shadow. discarding message.")
-                        return
-
-                    url = state[k]['url']
-                    logger.debug("{0} URL: {1}".format(k, url))
-
-                    if not url:
-                        logger.warning("empty url in shadow state, discarding message.")
-                        return
-
-                    # Try to extract quality field.
-                    quality = state[k].get("quality", "best")
-
-                    yield options.stop_stream()
-                    res, res_msg = yield options.start_stream(url, quality)
-
-                    if res:
-                        logger.info("Started stream via MQTT")
-                    else:
-                        logger.error("Error starting stream: {0}".format(res_msg))
-                        #TODO revert to previous stream on error
-
-                    found = True
+            if count >= timeout:
+                if retry >= retries:
+                    logger.error("Max retries exceeded while waiting for initial shadow state.")
                     break
 
-            if not found:
-                logger.warning("Unsupported state in message, expected 'desired', or 'reported'")
+                retry += 1
+                logger.warning("Initial state watchdog expired, requesting shadow state again ({0}/{1}).".format(retry, retries))
+                self.__get_thing_shadow()
+                count = 0
 
+            yield nxt
+
+
+    def __parse_payload(self, msg):
+        return json.loads(msg.payload.decode())
+
+
+    def __get_thing_shadow(self):
+        self.mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1)
+
+
+    def __publish_state(self, url, quality):
+        logger.info("Publishing state update: url='{0}', quality='{1}'".format(url, quality))
+        payload = json.dumps({
+            "state": {
+                "reported": {
+                    "url": url,
+                    "quality": quality
+                }
+            }
+        })
+        self.mqttc.publish('$aws/things/%s/shadow/update' % options.thing_name, payload=payload)
+
+
+    @gen.coroutine
+    def __resolve_state(self):
+        # This coroutine actually diffs the shadow state with the actual state and starts the stream if needed.
+        # If the stream was start successfully then the new reported state is published.
+
+        if self.shadow is None:
+            logger.error("__resolve_state called before shadow was set.")
+            return
+
+        logger.debug(self.shadow)
+
+        def get_field(name, default=None):
+            return self.shadow['state'].get('desired', self.shadow['state'].get('reported', {})).get(name, default)
+
+        # Get url and quality from shadow 'desired' or 'reported'
+        shadow_url = get_field("url")
+        quality = get_field("quality", "best")
+
+        if shadow_url is None:
+            logger.error("No 'url' state found in thing shadow")
+            return
+
+        if options.curr_url != shadow_url:
+            if shadow_url:
+                logger.info("old url: '{0}', new url: '{1}'".format(options.curr_url, shadow_url))
+
+                yield options.stop_stream()
+                res, res_msg = yield options.start_stream(shadow_url, quality)
+
+                if res:
+                    logger.info("Started stream via MQTT")
+                    self.__publish_state(shadow_url, quality)
+                else:
+                    logger.error("Error starting stream: {0}".format(res_msg))
+                    #TODO revert to previous stream on error
+
+            else:
+                logger.warning("Skipping sync with empty shadow url.")
         else:
-            logger.warning("No 'state' found in payload.")
+            logger.info("shadow and state are in sync, no action.")
+
+
+    def on_update_accepted(self, mqttc, obj, msg):
+        logger.debug("Received /update/accepted msg: {0}".format(msg.payload))
+        self.shadow.update(self.__parse_payload(msg))
+        self.__resolve_state()
+
+
+    def on_update_rejected(self, mqttc, obj, msg):
+        logger.warning("Received /update/rejected msg: {0}".format(msg.payload))
+
+
+    def on_get_accepted(self, mqttc, obj, msg):
+        logger.debug("Received /get/accepted msg: {0}".format(msg.payload))
+        self.shadow = self.__parse_payload(msg)
+        self.__resolve_state()
+
+
+    def on_update_delta(self, mqttc, obj, msg):
+        logger.info("Received /update/delta msg: {0}".format(msg))
+        self.shadow.update(self.__parse_payload(msg))
+        self.__resolve_state()
+
+
+    def on_get_rejected(self, mqttc, obj, msg):
+        logger.warning("Received /get/rejected msg: {0}".format(msg))
+
+        if self.shadow is None and self.get_shadow_retry_count < self.get_shadow_max_retries:
+            # Retry the initial shadow request.
+            self.get_shadow_retry_count += 1
+            self.__get_thing_shadow()
+
+
+    def on_message(self, mqttc, obj, msg):
+        logger.warning("Received unhandled message from topic: "+msg.topic+" | QoS: "+str(msg.qos)+" | Data Received: "+str(msg.payload))

@@ -14,6 +14,7 @@ define("cookie_secret", default="tornadoapp-{0}".format((random.randrange(10000)
 
 class Application(web.Application):
     def __init__(self):
+        logger.setLevel(logging.DEBUG if options.debug else logging.INFO)
 
         define(name="stream", default=None, help="instance of the currently running stream", type=process.Subprocess)
         define(name="url", default=None, help="current url", type=str)
