@@ -3,7 +3,7 @@ streamer:
     environment:
         DEBUG:
         PORT: 8888
-        PLAYER_DOCKER_IMAGE: "danisla/livestreamer:latest"
+        PLAYER_DOCKER_IMAGE: "danisla/rpi-omxplayer:latest"
         IOT_ENDPOINT: "${IOT_ENDPOINT}"
         IOT_PORT: 8883
         THING_NAME: raspberry-pi
