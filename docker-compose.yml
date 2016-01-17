@@ -12,3 +12,6 @@ streamer:
     volumes:
         - /home/pi/recovery/_USER/certs:/opt/certs:ro
         - /var/run/docker.sock:/var/run/docker.sock:rw
+
+player:
+    image: danisla/rpi-omxplayer:latest

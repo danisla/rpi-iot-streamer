@@ -36,7 +36,6 @@ logger.setLevel(log_level)
 ###################################
 
 default_client_id = "%s-%d" % ("iot-streamer-thing", random.randrange(100))
-omxplayer_cmd = 'livestreamer --player omxplayer --fifo --player-args "\-o both \-b \-g \'{filename}\'" --yes-run-as-root --default-stream="{{QUALITY}}" "{{URL}}"'
 
 # Program options.
 define("debug", default=os.environ.get("DEBUG","false").lower() == "true", help="Enable debugging")
