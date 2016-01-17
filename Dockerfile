@@ -7,4 +7,4 @@ ENTRYPOINT python3 iot_streamer.py
 RUN pip3 install \
     paho-mqtt livestreamer tornado docker-py pymongo
 
-ADD iot_streamer.py .
+ADD src/iot_streamer/ .

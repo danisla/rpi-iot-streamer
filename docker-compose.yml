@@ -1,12 +1,12 @@
 streamer:
-    image: danisla/rpi-iot-streamer:1.0.1
+    image: danisla/rpi-iot-streamer:1.1.0
     environment:
         DEBUG:
         PORT: 8888
         PLAYER_DOCKER_IMAGE: "danisla/rpi-omxplayer:latest"
         IOT_ENDPOINT: "${IOT_ENDPOINT}"
         IOT_PORT: 8883
-        THING_NAME: raspberry-pi
+        THING_NAME: "${THING_NAME}"
     ports:
         - "8888:8888"
     volumes:
