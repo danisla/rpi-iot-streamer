@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2016-01-18T19:13:35Z",
+    "version": "2016-01-18T20:23:29Z",
     "title": "IotStreamer"
   },
   "host": "<REDACTED>.execute-api.us-west-2.amazonaws.com",
@@ -26,18 +26,18 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "200": {
               "statusCode": "200",
               "responseTemplates": {
-                "application/json": "{\n \"status\": \"ok\",\n \"api\": {\n   \"/streamer/{thingName}\": [\"GET\",\"PUT\"],\n   \"/streamer/test-url\": [\"GET\"]\n  } \n}"
+                "application/json": "{\n \"status\": \"ok\",\n \"api\": {\n   \"/streamer/{thingName}\": [\"GET\",\"PUT\"],\n   \"/streamer/test-url\": [\"GET\"],\n   \"/streamer/things\": [\"GET\"]\n  } \n}"
               }
             }
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
-          }
+          },
+          "type": "mock"
         }
       }
     },
@@ -64,7 +64,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -77,7 +76,38 @@
             "application/json": "{\"url\": \"$input.params('url')\" }"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:TestStreamerURL/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
+        }
+      }
+    },
+    "/streamer/things": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            },
+            "headers": {}
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseTemplates": {
+                "application/json": "__passthrough__"
+              }
+            }
+          },
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:ListThings/invocations",
+          "httpMethod": "POST",
+          "type": "aws"
         }
       }
     },
@@ -104,7 +134,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -117,7 +146,8 @@
             "application/json": "{ \"thingName\" : \"$input.params('thingName')\" }"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:GetThingShadow/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       },
       "put": {
@@ -154,7 +184,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -167,7 +196,8 @@
             "application/json": "{ \n    \"thingName\": \"$input.params('thingName')\",\n    \"url\": \"$input.params('url')\",\n    \"quality\": \"$input.params('quality')\"\n}"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:SetStreamerURL/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       }
     }
