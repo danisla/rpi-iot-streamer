@@ -54,7 +54,7 @@ function create_new_iot_thing() {
 
     thing_json=$(aws iot create-thing \
         --thing-name "${name}" \
-        --attribute-payload '{"attributes":{"location":"'"${location}"'"}}')
+        --attribute-payload '{"attributes":{"type": "iot-streamer","location":"'"${location}"'"}}')
 
     aws iot attach-principal-policy --principal "${cert_arn}" --policy-name "${policy}"
 
