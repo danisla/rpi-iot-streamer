@@ -8,7 +8,7 @@ The stream is started in a separate container, the `iot-streamer.py` script star
 
 ## IoT Thing
 
-Use the provided [`./make_thing.sh`] script to generate the certs and create the new thing in the Iot thing registry.
+Use the provided [`./make_thing.sh`](./make_thing.sh) script to generate the certs and create the new thing in the Iot thing registry.
 
 ## API
 
