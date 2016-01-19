@@ -44,7 +44,7 @@
                                         <div ng-show="thing.input_url.streams">
                                             <li class="list-group-item">
                                                 <span ng-repeat="(quality,stream) in thing.input_url.streams">
-                                                    <button type="button" class="btn btn-default" ng-click="main.setUrl(thing, quality)">{{quality}}</button>
+                                                    <button type="button" class="btn btn-{{main.getQualityButton(thing, quality)}}" ng-click="main.setUrl(thing, quality)">{{quality}}</button>
                                                 </span>
                                             </li>
                                         </div>

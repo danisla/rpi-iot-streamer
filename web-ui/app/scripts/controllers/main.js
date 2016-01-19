@@ -179,5 +179,15 @@ angular.module('webUiApp')
             });
         };
 
+        this.getQualityButton = function(thing, quality) {
+            if (thing.shadow.state.reported.quality == quality) {
+                return "success"
+            } else if (thing.shadow.state.desired.quality == quality) {
+                return "warning"
+            } else {
+                return "default";
+            }
+        };
+
     }
 );
