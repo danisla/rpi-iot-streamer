@@ -8,22 +8,22 @@
  * Service in the webUiApp.
  */
 angular.module('webUiApp')
-  .service('thingService', function ($http) {
+  .service('thingService', function ($http, settings) {
     // AngularJS will instantiate a singleton by calling "new" on this function
 
     this.getThingList = function() {
-        return $http.get("https://hb1zyjxo1g.execute-api.us-west-2.amazonaws.com/prod/streamer/things");
+        return $http.get(settings.streamer_endpoint + "/streamer/things");
     };
 
     this.getThingShadow = function(thingName) {
-        return $http.get("https://hb1zyjxo1g.execute-api.us-west-2.amazonaws.com/prod/streamer/"+thingName);
+        return $http.get(settings.streamer_endpoint + "/streamer/"+thingName);
     };
 
     this.testUrl = function(url, canceler) {
-        return $http.get("https://hb1zyjxo1g.execute-api.us-west-2.amazonaws.com/prod/streamer/test-url?url="+url, {timeout: canceler.promise});
+        return $http.get(settings.streamer_endpoint + "/streamer/test-url?url="+url, {timeout: canceler.promise});
     };
 
     this.setUrl = function(thingName, url, quality) {
-        return $http.put("https://hb1zyjxo1g.execute-api.us-west-2.amazonaws.com/prod/streamer/"+thingName+"?url="+url+"&quality="+quality);
+        return $http.put(settings.streamer_endpoint + "/streamer/"+thingName+"?url="+url+"&quality="+quality);
     }
   });
