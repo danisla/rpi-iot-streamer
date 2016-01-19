@@ -63,6 +63,8 @@ class StartStreamHandler(web.RequestHandler):
         if res:
             logger.info("Started stream via REST")
 
+            options.publish_state(url, quality, update_desired=True)
+
             self.write({
                 "status": "started",
                 "url": url

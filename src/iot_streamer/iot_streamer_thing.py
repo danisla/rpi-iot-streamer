@@ -171,17 +171,20 @@ class IotStreamerThing(object):
         self.mqttc.publish('$aws/things/%s/shadow/get' % options.thing_name, payload='', qos=1)
 
 
-    def __publish_state(self, url, quality):
+    def publish_state(self, url, quality, update_desired=False):
         logger.info("Publishing state update: url='{0}', quality='{1}'".format(url, quality))
-        payload = json.dumps({
+        payload = {
             "state": {
                 "reported": {
                     "url": url,
                     "quality": quality
                 }
             }
-        })
-        self.mqttc.publish('$aws/things/%s/shadow/update' % options.thing_name, payload=payload)
+        }
+        if update_desired:
+            payload["state"]["desired"] = payload["state"]["reported"]
+
+        self.mqttc.publish('$aws/things/%s/shadow/update' % options.thing_name, payload=json.dumps(payload))
 
 
     @gen.coroutine
@@ -215,7 +218,7 @@ class IotStreamerThing(object):
 
                 if res:
                     logger.info("Started stream via MQTT")
-                    self.__publish_state(shadow_url, quality)
+                    self.publish_state(shadow_url, quality)
                 else:
                     logger.error("Error starting stream: {0}".format(res_msg))
                     #TODO revert to previous stream on error

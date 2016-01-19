@@ -267,6 +267,7 @@ if __name__ == "__main__":
 
     # Initialize the IoT thing.
     iot_thing = IotStreamerThing()
+    define("publish_state", default=iot_thing.publish_state, help="publish shadow state")
 
     def signal_handler(signal, frame):
         logger.info("Stopping current stream")
