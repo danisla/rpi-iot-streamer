@@ -1,0 +1,56 @@
+
+<div class="container">
+    <div class="row">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">Devices</h3>
+            </div>
+            <div class="panel-body">
+                <p id="loading">Loading...</p>
+                <!-- Thing -->
+                <div class="col-lg-12" ng-repeat="thing in things | orderBy:'-thingName'">
+                    <p>
+                        <div class="input-group">
+
+                            <!-- thing name label -->
+                            <span class="input-group-addon">{{thing.thingName}}</span>
+
+                            <!-- url input -->
+                            <input type="text" class="{{ (thing.insync) ? 'list-group-item-success' : 'list-group-item-warning'}} form-control" placeholder="enter stream url" ng-model="thing.shadow.state.desired.url" ng-change="main.checkDesiredUrl(thing)">
+
+                            <span class="input-group-btn">
+
+                                <!-- status dropdown -->
+                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="dropdownMenu1" aria-haspopup="true" aria-expanded="true">
+                                    <span id="input_dropdown" class="glyphicon {{ (thing.updating) ? 'glyphicon-refresh glyphicon-spin' : 'glyphicon-menu-hamburger' }}"></span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                    <li class="dropdown-header">Device Status</li>
+                                    <li role="separator" class="divider"></li>
+                                    <li class="list-group-item-{{ (thing.insync) ? 'success' : 'warning' }}"><a>{{thing.status}}</a></li>
+                                    <li role="separator" class="divider"></li>
+
+                                    <div ng-show="thing.shadow.state">
+                                        <li class="dropdown-header">URL Info</li>
+                                        <li class="list-group-item">streamable: {{thing.input_url.streamable}}</li>
+                                        <div ng-show="thing.input_url.streams">
+                                            <li class="list-group-item">streams:
+                                                <span ng-repeat="(quality,stream) in thing.input_url.streams">
+                                                    <a href="{{stream}}" target="_blank">{{quality}}</a>
+                                                </span>
+                                            </li>
+                                        </div>
+                                    </div>
+                                </ul>
+
+                                <!-- set now button -->
+                                <button class="btn btn-default" type="button" ng-click="main.setUrl(thing)" ng-disabled="thing.updating || !thing.input_url.streamable">Set now</button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </p>
+                </div><!-- /.col-lg-6 -->
+                <!-- /Thing -->
+            </div>
+        </div>
+    </div>
+</div>
