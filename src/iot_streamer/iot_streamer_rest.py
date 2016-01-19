@@ -58,25 +58,32 @@ class StartStreamHandler(web.RequestHandler):
         quality = str(self.get_query_argument("quality", "best"))
 
         yield options.stop_stream()
-        res, msg = yield options.start_stream(url, quality)
 
-        if res:
-            logger.info("Started stream via REST")
-
+        if url:
+            res, msg = yield options.start_stream(url, quality)
             options.publish_state(url, quality, update_desired=True)
 
+            if res:
+                logger.info("Started stream via REST")
+
+                self.write({
+                    "status": "started",
+                    "url": url
+                })
+            else:
+                logger.error("Error starting stream via REST")
+
+                self.set_status(500)
+                self.write({
+                    "status": "error",
+                    "msg": msg
+                })
+        else:
             self.write({
-                "status": "started",
+                "status": "stopped",
                 "url": url
             })
-        else:
-            logger.error("Error starting stream via REST")
-
-            self.set_status(500)
-            self.write({
-                "status": "error",
-                "msg": msg
-            })
+            options.publish_state(url, quality, update_desired=True)
 
 
 class StopStreamHandler(web.RequestHandler):

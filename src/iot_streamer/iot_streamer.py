@@ -235,6 +235,8 @@ def stop_stream():
         logger.info("Removing container: '{0}'".format(c["Names"]))
         cli.remove_container(i)
 
+    options.curr_url = None
+
 
 ################################################################################
 
