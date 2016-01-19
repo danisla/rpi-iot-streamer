@@ -27,6 +27,11 @@ def test_streamer_url(event, context):
         streams = None
         try:
             streams = livestreamer.streams(url)
+            for q,u in streams.items():
+                try:
+                    streams[q] = u.url
+                except Exception as e:
+                    streams[q] = u
         except NoPluginError:
             res["msg"] = "URL is not yet supported."
         except PluginError as err:
