@@ -8,7 +8,10 @@
  * Controller of the webUiApp
  */
 angular.module('webUiApp')
-    .controller('MainCtrl', function ($scope, $q, thingService) {
+    .controller('MainCtrl', function ($scope, $q, thingService, authService) {
+
+        this.doLogin = authService.doLogin; // passthrough
+        $scope.authorized = authService.isAuthorized();
 
         $scope.initial_device_shadow = {
             "state": {
@@ -26,6 +29,9 @@ angular.module('webUiApp')
             Initialize the page by fetching the list of things and their shadows.
             This will populate $scope.things.
             */
+
+            if (!authService.isAuthorized()) return authService.login();
+
             thingService.getThingList().then(function(data) {
                 if (data.status == 200) {
                     var things = data.data.things;

@@ -1,5 +1,14 @@
+<div class="jumbotron" ng-show="!authorized">
+    <p>Authorized: {{authorized}}</p>
+    <p class="lead">
+        Login to access the control panel.
+    </p>
+    <a class="btn btn-primary" ng-click="main.doLogin()">
+        Login with GitHub
+    </a>
+</div>
 
-<div class="container">
+<div class="container" ng-show="authorized">
     <div class="row">
         <div class="panel panel-info">
             <div class="panel-heading">
