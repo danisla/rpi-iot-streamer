@@ -40,12 +40,11 @@
                                     <li role="separator" class="divider"></li>
 
                                     <div ng-show="thing.shadow.state">
-                                        <li class="dropdown-header">URL Info</li>
-                                        <li class="list-group-item">streamable: {{thing.input_url.streamable}}</li>
+                                        <li class="dropdown-header" ng-show="thing.input_url.streams">Alternate Streams</li>
                                         <div ng-show="thing.input_url.streams">
-                                            <li class="list-group-item">streams:
+                                            <li class="list-group-item">
                                                 <span ng-repeat="(quality,stream) in thing.input_url.streams">
-                                                    <a href="{{stream}}" target="_blank">{{quality}}</a>
+                                                    <button type="button" class="btn btn-default" ng-click="main.setUrl(thing, quality)">{{quality}}</button>
                                                 </span>
                                             </li>
                                         </div>

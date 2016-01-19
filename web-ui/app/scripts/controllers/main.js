@@ -15,8 +15,8 @@ angular.module('webUiApp')
 
         $scope.initial_device_shadow = {
             "state": {
-                "desired": {"url": null},
-                "reported": {"url": null}
+                "desired": {"url": null, "quality": null},
+                "reported": {"url": null, "quality": null}
             }
         };
 
@@ -62,7 +62,7 @@ angular.module('webUiApp')
                                 } else if (shadow.state.delta) {
                                     status = "Waiting for update from: '"+shadow.state.delta.url;
                                 } else {
-                                    status = "URL is in sync with device.";
+                                    status = "URL and quality are in sync with device.";
                                     insync = true;
                                 }
 
@@ -100,11 +100,24 @@ angular.module('webUiApp')
                     if (thing.shadow.state.desired.url != shadow.state.desired.url) {
                         shadow.state.desired.url = thing.shadow.state.desired.url;
                     }
+
+                    //if (thing.shadow.state.desired.quality != shadow.state.desired.quality) {
+                    //    shadow.state.desired.quality = thing.shadow.state.desired.quality;
+                    //}
+
                     thing.shadow = shadow;
-                    thing.insync = (thing.shadow.state.reported && (thing.shadow.state.desired.url == shadow.state.reported.url));
+                    thing.insync = (thing.shadow.state.reported &&
+                        ((thing.shadow.state.desired.url == shadow.state.reported.url) &&
+                        (thing.shadow.state.desired.quality == shadow.state.reported.quality))
+                    );
+
+                    if (thing.insync) {
+                        thing.status = "URL and quality are in sync with device.";
+                    } else {
+                        thing.status = "Waiting for device to sync desired URL and quality";
+                    }
 
                     // Call again.
-
                     return $scope.startShadowWatcher(thing);
                 });
             }, 3000);
@@ -147,12 +160,12 @@ angular.module('webUiApp')
             });
         };
 
-        this.setUrl = function(thing) {
+        this.setUrl = function(thing, quality) {
             var thingName = thing.thingName;
             var url = thing.shadow.state.desired.url;
-            var quality = "best"; // TODO: get quality from UI.
+            if (!quality) quality = "best";
 
-            console.debug("Setting "+thingName+" URL to: " + url);
+            console.debug("Setting "+thingName+" URL to: " + url + ", quality="+quality);
 
             if (thing.updating) return;
 
