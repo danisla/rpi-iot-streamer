@@ -11,7 +11,7 @@ def set_streamer_url(event, context):
         print("ERROR: thingName not found in request")
         return {"error": "missing thingName"}
 
-    if 'url' not in event or not event['url']:
+    if 'url' not in event:
         print("ERROR: url not found in request")
         return {"error": "missing url"}
 
