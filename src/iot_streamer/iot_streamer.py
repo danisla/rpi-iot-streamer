@@ -235,7 +235,8 @@ def stop_stream():
         logger.info("Removing container: '{0}'".format(c["Names"]))
         cli.remove_container(i)
 
-    options.curr_url = None
+    options.curr_url = ''
+    options.curr_quality = ''
 
 
 ################################################################################
@@ -246,8 +247,8 @@ if __name__ == "__main__":
 
     logger.setLevel(logging.DEBUG if options.debug else logging.INFO)
 
-    define("curr_url", default=None, help="Current URL being displayed")
-    define("curr_quality", default=None, help="Current stream quality being displayed")
+    define("curr_url", default='', help="Current URL being displayed")
+    define("curr_quality", default='', help="Current stream quality being displayed")
 
     define("mqtt_connected", default=False, help="Indicator that mqtt connect was successful")
     define("mqtt_subscribed", default=False, help="Indicator that mqtt subscribe was successful")

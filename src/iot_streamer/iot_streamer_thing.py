@@ -209,7 +209,7 @@ class IotStreamerThing(object):
             logger.error("No 'url' state found in thing shadow")
             return
 
-        if options.curr_url != shadow_url:
+        if options.curr_url != shadow_url or options.curr_quality != quality:
             if shadow_url:
                 logger.info("old url: '{0}', new url: '{1}'".format(options.curr_url, shadow_url))
 
@@ -224,7 +224,9 @@ class IotStreamerThing(object):
                     #TODO revert to previous stream on error
 
             else:
-                logger.warning("Skipping sync with empty shadow url.")
+                logger.warning("Stopping stream because shadow url is empty.")
+                yield options.stop_stream()
+                self.publish_state(shadow_url, quality)
         else:
             logger.info("shadow and state are in sync, no action.")
 
