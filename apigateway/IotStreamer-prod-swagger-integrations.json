@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2016-01-18T21:43:28Z",
+    "version": "2016-01-19T08:27:06Z",
     "title": "IotStreamer"
   },
   "host": "<REDACTED>.execute-api.us-west-2.amazonaws.com",
@@ -12,25 +12,9 @@
   "paths": {
     "/": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "parameters": [],
-        "responses": {
-          "200": {
-            "description": "200 response",
-            "schema": {
-              "$ref": "#/definitions/Empty"
-            },
-            "headers": {
-              "Access-Control-Allow-Origin": {
-                "type": "string"
-              }
-            }
-          }
-        },
+        "responses": {},
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "200": {
               "statusCode": "200",
@@ -44,7 +28,8 @@
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
-          }
+          },
+          "type": "mock"
         }
       },
       "options": {
@@ -72,7 +57,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -88,7 +72,46 @@
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
+          },
+          "type": "mock"
+        }
+      }
+    },
+    "/get-github-token": {
+      "get": {
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
+        ],
+        "responses": {
+          "302": {
+            "description": "302 response",
+            "headers": {
+              "Location": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            ".*": {
+              "statusCode": "302",
+              "responseParameters": {
+                "method.response.header.Location": "integration.response.body.location"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{ \"code\": \"$input.params('code')\" }"
+          },
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:GetGithubToken/invocations",
+          "httpMethod": "POST",
+          "type": "aws"
         }
       }
     },
@@ -119,7 +142,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -135,7 +157,8 @@
             "application/json": "{\"url\": \"$input.params('url')\" }"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:TestStreamerURL/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       },
       "options": {
@@ -163,7 +186,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -179,7 +201,8 @@
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
-          }
+          },
+          "type": "mock"
         }
       }
     },
@@ -203,7 +226,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -216,7 +238,8 @@
             }
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:ListThings/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       },
       "options": {
@@ -244,7 +267,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -260,7 +282,8 @@
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
-          }
+          },
+          "type": "mock"
         }
       }
     },
@@ -291,7 +314,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -307,7 +329,8 @@
             "application/json": "{ \"thingName\" : \"$input.params('thingName')\" }"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:GetThingShadow/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       },
       "put": {
@@ -348,7 +371,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "aws",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -364,7 +386,8 @@
             "application/json": "{ \n    \"thingName\": \"$input.params('thingName')\",\n    \"url\": \"$input.params('url')\",\n    \"quality\": \"$input.params('quality')\"\n}"
           },
           "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:SetStreamerURL/invocations",
-          "httpMethod": "POST"
+          "httpMethod": "POST",
+          "type": "aws"
         }
       },
       "options": {
@@ -392,7 +415,6 @@
           }
         },
         "x-amazon-apigateway-integration": {
-          "type": "mock",
           "responses": {
             "default": {
               "statusCode": "200",
@@ -408,7 +430,8 @@
           },
           "requestTemplates": {
             "application/json": "{\"statusCode\": 200}"
-          }
+          },
+          "type": "mock"
         }
       }
     }
