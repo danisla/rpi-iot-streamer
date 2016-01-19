@@ -92,7 +92,9 @@ thing_json=$(create_new_iot_thing "${name}" "${location}" "${policyName}")
 
 [[ ! -s "./certs/rootCA.pem" || ! -s "./certs/cert.pem" || ! -s "./certs/private.pem" ]] && log "ERORR: Could not generate certs."
 
-log "INFO: Device certificates generated and saved to ./certs/"
+echo "$name" > ./certs/thing_name.txt
+
+log "INFO: Device certificates for '${name}' generated and saved to ./certs/"
 
 endpoint=$(get_endpoint)
 
