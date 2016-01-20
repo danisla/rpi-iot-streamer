@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 client = boto3.client('iot-data')
 
-def get_thing_shadow(event, context):
+def handler(event, context):
     print(context)
 
     if 'thingName' not in event:

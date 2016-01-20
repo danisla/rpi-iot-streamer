@@ -4,7 +4,7 @@ import json
 import livestreamer
 from livestreamer import NoPluginError, PluginError
 
-def test_streamer_url(event, context):
+def handler(event, context):
 
     if 'url' not in event or not event['url']:
         print("ERROR: url not found in request")

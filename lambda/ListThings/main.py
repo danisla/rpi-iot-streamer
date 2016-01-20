@@ -5,7 +5,7 @@ import json
 
 client = boto3.client('iot')
 
-def list_things(event, context):
+def handler(event, context):
 
     res = client.list_things(attributeName="type", attributeValue="iot-streamer")
     things = res.get("things", [])

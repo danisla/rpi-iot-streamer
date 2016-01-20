@@ -15,18 +15,6 @@ Setup env:
 ./make_deps.sh
 ```
 
-Build the lambda package:
-
-```
-./make_zip.sh
-```
-
-Build and deploy lambda function (after creating function.)
-
-```
-./update_code.sh
-```
-
 Testing:
 
 ```

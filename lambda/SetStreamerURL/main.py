@@ -5,7 +5,7 @@ import json
 
 client = boto3.client('iot-data')
 
-def set_streamer_url(event, context):
+def handler(event, context):
 
     if 'thingName' not in event:
         print("ERROR: thingName not found in request")
