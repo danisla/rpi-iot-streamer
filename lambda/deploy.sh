@@ -52,6 +52,7 @@ if [[ -z "${exists}" ]]; then
           --runtime python2.7 \
           --role "${role}" \
           --handler main.handler \
+          --timeout 5 \
           --zip-file fileb://${dest} \
           --region $region
 

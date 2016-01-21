@@ -16,9 +16,7 @@ REDIRECT_URL = config["REDIRECT_URL"]
 
 GH_TOKEN_URL = config["GH_TOKEN_URL"]
 GH_USER_URL = config["GH_USER_URL"]
-
-IDENTITY_POOL_ID = config["IDENTITY_POOL_ID"]
-DEVELOPER_AUTH_PROVIDER = config["DEVELOPER_AUTH_PROVIDER"]
+GH_REPOS_URL = config["GH_REPOS_URL"]
 
 API_KEY = config["API_KEY"]
 
@@ -69,31 +67,38 @@ def handler(event, context):
         }
 
     username = user["login"]
-    repos_url = user["repos_url"]
 
-    # Fetch the user repos.
+    repo_url = GH_REPOS_URL.replace("{/repo}", REQUIRED_REPO)
+    # Fetch the repo metadata.
     try:
         headers = {
             "Accept": "application/json",
             "Authorization": "token %s" % gh_tok
         }
-        req = urllib2.Request(repos_url, None, headers)
+        req = urllib2.Request(repo_url, None, headers)
         response = urllib2.urlopen(req)
-        gh_res = response.read()
-        repos = json.loads(gh_res)
+        repo = json.loads(response.read())
     except Exception as e:
         return {
-            "error": "error requesting user repos: " + str(e)
+            "error": "error requesting repo meta: " + str(e)
         }
 
-    found_repos = list(filter(lambda x: x["name"] == REQUIRED_REPO and x["owner"]["login"] == username, repos))
+    collaborators_url = repo["collaborators_url"].replace("{/collaborator}", "/" + username)
 
-    if found_repos:
-        print(username +" is owner of " + REQUIRED_REPO)
-        return {
-            "location": REDIRECT_URL+"?api_key="+API_KEY
+    # Fetch the collaborators of the repo.
+    try:
+        headers = {
+            "Accept": "application/json",
+            "Authorization": "token %s" % gh_tok
         }
-    else:
+        req = urllib2.Request(collaborators_url, None, headers)
+        response = urllib2.urlopen(req)
+    except Exception as e:
         return {
-            "error": "User '%s' is not owner of repo '%s'" % (username, REQUIRED_REPO)
+            "error": "User '%s' is not collaborator of repo '%s': %s, %s, %s" % (username, REQUIRED_REPO, collaborators_url, str(e), str(gh_tok))
         }
+
+    print(username +" is collaborator of " + REQUIRED_REPO)
+    return {
+        "location": REDIRECT_URL+"?api_key="+API_KEY
+    }

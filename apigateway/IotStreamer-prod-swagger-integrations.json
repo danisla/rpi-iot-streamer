@@ -1,19 +1,34 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "2016-01-20T03:13:51Z",
+    "version": "2016-01-21T00:59:02Z",
     "title": "IotStreamer"
   },
-  "host": "<REDACTED>.execute-api.us-west-2.amazonaws.com",
-  "basePath": "/prod",
+  "host": "hb1zyjxo1g.execute-api.us-west-2.amazonaws.com",
+  "basePath": "/",
   "schemes": [
     "https"
   ],
   "paths": {
     "/": {
       "get": {
+        "produces": [
+          "application/json"
+        ],
         "parameters": [],
-        "responses": {},
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            },
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "x-amazon-apigateway-integration": {
           "responses": {
             "200": {
@@ -109,7 +124,7 @@
           "requestTemplates": {
             "application/json": "{\"code\": \"$input.params('code')\" }"
           },
-          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:GithubCodeToAPIKey/invocations",
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:388108097674:function:GithubCodeToAPIKey/invocations",
           "httpMethod": "POST",
           "type": "aws"
         }
@@ -161,7 +176,7 @@
           "requestTemplates": {
             "application/json": "{\"url\": \"$input.params('url')\" }"
           },
-          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:TestStreamerURL/invocations",
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:388108097674:function:TestStreamerURL/invocations",
           "httpMethod": "POST",
           "type": "aws"
         }
@@ -247,7 +262,7 @@
               }
             }
           },
-          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:ListThings/invocations",
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:388108097674:function:ListThings/invocations",
           "httpMethod": "POST",
           "type": "aws"
         }
@@ -343,7 +358,7 @@
           "requestTemplates": {
             "application/json": "{ \"thingName\" : \"$input.params('thingName')\" }"
           },
-          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:GetThingShadow/invocations",
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:388108097674:function:GetThingShadow/invocations",
           "httpMethod": "POST",
           "type": "aws"
         }
@@ -405,7 +420,7 @@
           "requestTemplates": {
             "application/json": "{ \n    \"thingName\": \"$input.params('thingName')\",\n    \"url\": \"$input.params('url')\",\n    \"quality\": \"$input.params('quality')\"\n}"
           },
-          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:<REDACTED>:function:SetStreamerURL/invocations",
+          "uri": "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:388108097674:function:SetStreamerURL/invocations",
           "httpMethod": "POST",
           "type": "aws"
         }
