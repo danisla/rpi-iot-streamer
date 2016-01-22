@@ -6,3 +6,4 @@ key.pub
 tmp
 certs
 lambda/config.json
+.test.out
