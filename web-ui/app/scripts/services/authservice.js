@@ -19,7 +19,7 @@ angular.module('webUiApp')
     }
 
     this.doLogin = function() {
-        window.location.href = "https://www.github.com/login/oauth/authorize?client_id="+settings.gh_client_id;
+        window.location.href = settings.gh_auth_endpoint;
         return;
     }
 
