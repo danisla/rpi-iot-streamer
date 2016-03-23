@@ -15,3 +15,10 @@ streamer:
 
 player:
     image: danisla/rpi-omxplayer:latest
+
+dockerui:
+    image: hypriot/rpi-dockerui
+    volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+        - "9000:9000"
